@@ -1,0 +1,9 @@
+pytest
+pytest-xdist
+pytest-pythonpath
+numpy 
+scipy
+ipykernel
+matplotlib
+joblib
+sympy

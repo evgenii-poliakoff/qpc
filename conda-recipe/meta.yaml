@@ -1,0 +1,21 @@
+package:
+  name: qpc
+  version: "0.0.1"
+
+source:
+  path: ../qpc
+
+requirements:
+  host:
+    - {{ compiler('c') }}
+    - {{ compiler('fortran') }}
+    - python=3.12
+    - numpy=2.3
+    - scipy=1.15
+    - meson
+    - ninja
+
+  run:
+    - python=3.12
+    - numpy=2.3
+    - scipy=1.15
