@@ -16,6 +16,7 @@ import pathlib
 import math
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--fout', type=str, default = "lc")
 parser.add_argument('--chain', type=pathlib.Path, default = "chain.txt")
 parser.add_argument('--dt', type=float, default = 0.01)
 parser.add_argument('--ns', type=int, default = -1)
@@ -24,7 +25,9 @@ parser.add_argument('--rtol', type=float, default = 10**(-3))
 parser.add_argument('--ringmax', type=int, default = 4)
 args = parser.parse_args()
 
-cwd = os.getcwd()
+folder = args.fout
+fout = os.path.join(os.getcwd(), folder)
+os.makedirs(fout, exist_ok = True)
 
 print("Wellcome to lightcone constructor version 01.03.2023-14.44")
 print("Semiinfinite chain file: ", args.chain)
@@ -68,7 +71,7 @@ ntg = tg.size
 
 # save time grid
 
-with open(os.path.join(cwd, "time.txt"), "w") as f:
+with open(os.path.join(fout, "time.txt"), "w") as f:
     for i in range(ntg):
         print(str(tg[i]), file = f)
 
@@ -83,7 +86,7 @@ H = tools.tridiag(es, hs[1:])
 H_dense = H.todense()
 w, modes = tools.find_eigs_ascending(H_dense)
 
-with open(os.path.join(cwd, "star_out.txt"), "w") as f:
+with open(os.path.join(fout, "star_out.txt"), "w") as f:
     for i in range(ns):
         print(str(w[i]), "\t", modes[0, i].real * scoupling, "\t", modes[0, i].imag * scoupling, file = f)
 
@@ -329,7 +332,7 @@ to_ring = [ _ % m_max + 1 for _ in range(0, n_rel)]
 
 #---------------------------------------------------------------------
 
-with open(os.path.join(cwd, "intervals.txt"), "w") as f:
+with open(os.path.join(fout, "intervals.txt"), "w") as f:
 
     for i in intervals_r:
 
@@ -341,7 +344,7 @@ with open(os.path.join(cwd, "intervals.txt"), "w") as f:
 np.set_printoptions(linewidth=np.inf)
 
 couplings = couplings * scoupling
-with open(os.path.join(cwd, "couplings.txt"), "w") as f:
+with open(os.path.join(fout, "couplings.txt"), "w") as f:
 
     for i in intervals_r:
 
@@ -353,7 +356,7 @@ with open(os.path.join(cwd, "couplings.txt"), "w") as f:
              print('\t'.join(map(str, couplings[a : b, ti].real)), file = f)
              print('\t'.join(map(str, couplings[a : b, ti].imag)), file = f) 
 
-with open(os.path.join(cwd, "rotations.txt"), "w") as f: 
+with open(os.path.join(fout, "rotations.txt"), "w") as f: 
 
     for i in intervals_r:
 

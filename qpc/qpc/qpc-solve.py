@@ -24,6 +24,7 @@ print("Will read the lightcone info from the current directory")
 import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('--fout', type=str, default = "results")
+parser.add_argument('--fin', type=str, default = "lc")
 parser.add_argument('--cfrom', type=int, default = 1)
 parser.add_argument('--cto', type=int, default = 10)
 parser.add_argument('--csize', type=int, default = 10)
@@ -49,6 +50,13 @@ print("on max ", max_cores_used, " CPU cores")
 folder = args.fout
 
 print("Will save results into ", folder)
+
+#### where to find lightcones data
+
+fin = args.fin
+fin = os.path.join(os.getcwd(), fin)
+
+print("Will load lightcones from ", fin)
 
 #### Max simulation time and time step
 
@@ -87,9 +95,9 @@ print("hopping: ", h_chain)
 #----------------------------------------------------
 
 intervals = []
-
+p = os.path.join(fin, "intervals.txt")
 try:
-    with pathlib.Path("intervals.txt").open() as f:
+    with pathlib.Path(p).open() as f:
         while True:
             l = [int(e) for e in next(f).split()] 
             intervals.append(l)
@@ -99,9 +107,9 @@ except StopIteration as e:
 #----------------------------------------------------
 
 couplings = []
-
+p = os.path.join(fin, "couplings.txt")
 try:
-    with pathlib.Path("couplings.txt").open() as f:
+    with pathlib.Path(p).open() as f:
         while True:
             re = np.asarray([float(e) for e in next(f).split()])
             im = np.asarray([float(e) for e in next(f).split()])
@@ -116,7 +124,8 @@ rotations = []
 m_max = 0
 n_rel = 0
 
-with pathlib.Path("rotations.txt").open() as f:
+p = os.path.join(fin, "rotations.txt")
+with pathlib.Path(p).open() as f:
 
     for i in intervals:
 
@@ -142,7 +151,8 @@ print("Max number of coupled modes: ", m_max)
 
 #----------------------------------------------------
 
-with pathlib.Path("time.txt").open() as f:
+p = os.path.join(fin, "time.txt")
+with pathlib.Path(p).open() as f:
     tg = np.loadtxt(f)
 ntg = tg.size
 dt = tg[1] - tg[0]
@@ -157,7 +167,7 @@ t_ = t[0 : nt_]
     
 #-----------------------------------------------------
 
-p = os.path.join(sys.path[0], folder, "time.txt")
+p = os.path.join(os.getcwd(), folder, "time.txt")
 os.makedirs(os.path.dirname(p), exist_ok = True)
 
 with open(p, "w") as f:
@@ -387,7 +397,7 @@ def job(image):
 
     ####
     
-    path = os.path.join(sys.path[0], folder, "x_" + str(image) + ".txt")
+    path = os.path.join(os.getcwd(), folder, "x_" + str(image) + ".txt")
     
     with open(path, "w") as f:
         print(str(trajectories_per_chunk) + " " + str(0), file = f)
