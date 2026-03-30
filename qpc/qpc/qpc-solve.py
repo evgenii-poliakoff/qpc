@@ -32,6 +32,8 @@ parser.add_argument('--maxcores', type=int, default = 1)
 parser.add_argument('--nquanta', type=int, default = 3)
 parser.add_argument('--e', type=int, default = 1)
 parser.add_argument('--h', type=int, default = 0.05)
+parser.add_argument('--e_d', type=float, default = 1.0)
+parser.add_argument('--U', type=int, default = 0.0)
 parser.add_argument('--tmax', type=float, default = 200)
 
 
@@ -85,6 +87,18 @@ print("on-site energy: ", e_chain)
 h_chain = args.h
 
 print("hopping: ", h_chain)
+                    
+####
+
+e_d = args.e_d
+
+print("Gate voltage e_d: ", e_d)
+                    
+####
+
+U = args.U
+
+print("Coulomb interaction U: ", U)
                     
 ####
 
@@ -189,15 +203,7 @@ print('...done', flush = True)
 #### Initial condition
 
 psi_ini = np.zeros(m.space.dimension, dtype = complex)
-psi_ini[0] = 1 
-
-#occupations = np.zeros(m.m_tot, dtype = np.int32)
-
-#for i in range(m.m_imp):
-#    occupations[i] = 1
-
-#psi_ini = np.zeros(m.space.dimension, dtype = complex)
-#psi_ini[m.space.index(occupations)] = 1                      
+psi_ini[0] = 1                    
                     
 ####
 
@@ -205,22 +211,18 @@ to_ring = [ _ % m_max for _ in range(0, n_rel)]
 
 ###
 
-#Hy_ = e_chain * m.d_dag[1] @ m.d[1] - e_chain * m.d_dag[0] @ m.d[0] \
-#    + h_chain * m.d_dag[1] @ m.d_dag[0] + h_chain *  m.d[0] @ m.d[1] 
+def Hdot(ti):
 
-#Hy_ = e_chain * sum([m.d_dag[i] @ m.d[i] for i in range(m.m_imp)]) \
-#    + h_chain * sum([m.d_dag[i + 1] @ m.d[i] + m.d_dag[i] @ m.d[i + 1] for i in range(m.m_imp - 1)])
+    # gate voltage 
+    Hgate = e_d * m.d_dag[1] @ m.d[1] - e_d * m.d_dag[0] @ m.d[0]
 
-def Hy(ti):
-    if dt*ti < 300:
-        Hy_ = e_chain * m.d_dag[1] @ m.d[1] - e_chain * m.d_dag[0] @ m.d[0] \
-            + h_chain * m.d_dag[1] @ m.d_dag[0] + h_chain *  m.d[0] @ m.d[1]
-    else:
-        Hy_ = e_chain * m.d_dag[1] @ m.d[1] - e_chain * m.d_dag[0] @ m.d[0] \
-            + (h_chain * m.d_dag[1] @ m.d_dag[0] + h_chain *  m.d[0] @ m.d[1]) * np.sin(2*ti*dt)
-    return Hy_
+    # coulomb interaction
+    Hcoulomb = U * m.d_dag[1] @ m.d[1] - U * m.d_dag[0] @ m.d[0] @ m.d_dag[1] @ m.d[1]
 
-#j_p = m.j_z + 1j * m.j_y
+    # hopping between the two dots
+    Hhopping = h_chain * m.d_dag[1] @ m.d_dag[0] + h_chain *  m.d[0] @ m.d[1]
+
+    return Hgate + Hcoulomb + Hhopping
 
 la = lo.a()
 la_dag = lo.a_dag()
@@ -323,21 +325,11 @@ def job(image):
                     
             w = rotations[ni]
 
-            #try:
-
             l_ring = [m.l[to_ring[_]] for _ in range(a, b)]
             l_ring_dag = [m.l_dag[to_ring[_]] for _ in range(a, b)]
             
             r_ring = [m.r[to_ring[_]] for _ in range(a, b)]
             r_ring_dag = [m.r_dag[to_ring[_]] for _ in range(a, b)]
-
-            #except:
-
-                #print(a,b)
-                #print(to_ring)
-                #print(m_max)
-                #raise
-
 
             Hw = m.space.emptyH
             if not w is None:
@@ -358,7 +350,7 @@ def job(image):
                 return(V)            
           
             def Ht(ti):
-                return Hy(ti) + Vint(ti) + Hw
+                return Hdot(ti) + Vint(ti) + Hw
 
             def Hwt(ti):
                 return Hw
@@ -366,20 +358,10 @@ def job(image):
             eval.Ht_ = None
 
             def begin_step(ti, psi):
-                #print('bstep', flush = True)
                 eval.Ht_ = Ht(ti)
-                
-               
-               
-                
 
             def apply_H(ti, psi_in, psi_out):
-                #print('apple', flush = True)
-                #print(Ht_, flush = True)
                 mv(eval.Ht_, psi_in, psi_out)
-
-            #for ti, psi in tools.evolution(start_index = i[0], end_index = i[1], H = Ht, dt = dt, initial_state = psi0):
-            #    pass
 
             evolution_chained2_kicked(i[0], i1, dt, begin_step, apply_H, eval_o, psi_begin, psi, psi_mid, psi_mid_next, first_in_chain)
             first_in_chain = 0
