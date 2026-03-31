@@ -31,9 +31,11 @@ parser.add_argument('--csize', type=int, default = 10)
 parser.add_argument('--maxcores', type=int, default = 1)
 parser.add_argument('--nquanta', type=int, default = 3)
 parser.add_argument('--e', type=int, default = 1)
-parser.add_argument('--h', type=int, default = 0.05)
+parser.add_argument('--h', type=float, default = 0.05)
 parser.add_argument('--e_d', type=float, default = 1.0)
-parser.add_argument('--U', type=int, default = 0.0)
+parser.add_argument('--U', type=float, default = 0.0)
+parser.add_argument('--A', type=float, default = 0.0)
+parser.add_argument('--w', type=float, default = 0.0)
 parser.add_argument('--tmax', type=float, default = 200)
 
 
@@ -99,6 +101,18 @@ print("Gate voltage e_d: ", e_d)
 U = args.U
 
 print("Coulomb interaction U: ", U)
+                    
+####
+
+A_floquet = args.A
+
+print("Floquet driving amplitude A: ", A_floquet)
+                    
+####
+
+w_floquet = args.w
+
+print("Floquet driving frequency w: ", w_floquet)
                     
 ####
 
@@ -214,7 +228,10 @@ to_ring = [ _ % m_max for _ in range(0, n_rel)]
 def Hdot(ti):
 
     # gate voltage 
-    Hgate = e_d * m.d_dag[1] @ m.d[1] - e_d * m.d_dag[0] @ m.d[0]
+
+    V_g = e_d + A_floquet * math.cos(w_floquet * dt * ti)
+
+    Hgate = V_g * m.d_dag[1] @ m.d[1] - V_g * m.d_dag[0] @ m.d[0]
 
     # coulomb interaction
     Hcoulomb = U * m.d_dag[1] @ m.d[1] - U * m.d_dag[0] @ m.d[0] @ m.d_dag[1] @ m.d[1]
