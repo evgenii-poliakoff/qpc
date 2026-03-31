@@ -314,10 +314,7 @@ def job(image):
                     
                     #job.n_out = job.n_out + ad
                     
-                    ad = 0
-                    
-                    for r in range(j_r_psi.shape[1]):
-                        ad = ad + j_r_prob[r] * np.vdot(j_r_psi[:, r], la_dag @ la @ j_r_psi[:, r])
+                    ad = np.vdot(j_r_psi[:, j_ind], la_dag @ la @ j_r_psi[:, j_ind])
                     
                     job.n_out = job.n_out + ad
                     
